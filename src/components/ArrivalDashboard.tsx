@@ -389,16 +389,17 @@ export default function ArrivalDashboard({
               ))}
 
               {ltaDropdownMatches.length === 0 && (
-                <div className="p-4 text-xs text-zinc-600 flex items-start gap-2.5">
-                  <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-zinc-800">
-                      No matching official bus stop found for &ldquo;{searchQuery}&rdquo;.
-                    </p>
-                    <p className="text-zinc-500 mt-1">
-                      refer to bus stop pole board/ panel for bus stop details
-                    </p>
+                <div className="p-4 text-xs text-zinc-700 bg-amber-50/70 border-t border-amber-200/80 space-y-2">
+                  <div className="flex items-start gap-2 text-amber-900 font-semibold">
+                    <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                    <span>What failed: Unable to fetch LTA data set matching &ldquo;{searchQuery}&rdquo;.</span>
                   </div>
+                  <p className="text-zinc-600 pl-6 text-[11px] leading-relaxed">
+                    <strong className="text-zinc-900">Whose problem it is:</strong> This is an LTA data feed cache or connection request issue — it is not your fault. The bus stop may be a legitimate bus stop.
+                  </p>
+                  <p className="text-zinc-600 pl-6 text-[11px] leading-relaxed">
+                    <strong className="text-zinc-900">What to do next:</strong> Please try again in 10 or 20 seconds. In the meantime, refer to the bus stop pole board/ panel for bus stop details, or click &ldquo;Input Bus Stop Details&rdquo; above to manually load it.
+                  </p>
                 </div>
               )}
             </div>
@@ -593,8 +594,17 @@ export default function ArrivalDashboard({
             );
           })}
           {filteredStops.length === 0 && (
-            <div className="text-xs text-zinc-500 py-2">
-              No matching bus stops found. Refer to bus stop pole board/ panel for bus stop details.
+            <div className="w-full text-xs bg-amber-50/80 border border-amber-200 text-amber-900 p-3.5 rounded-xl space-y-1.5 my-2">
+              <div className="font-semibold flex items-center gap-1.5 text-amber-950">
+                <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                <span>What failed: Unable to fetch LTA data set matching &ldquo;{searchQuery}&rdquo;.</span>
+              </div>
+              <p className="text-[11px] text-zinc-600 pl-5.5 leading-relaxed">
+                <strong className="text-zinc-900">Whose problem it is:</strong> This is an LTA data feed cache or connection request issue — not your fault. The bus stop may be a legitimate bus stop.
+              </p>
+              <p className="text-[11px] text-zinc-600 pl-5.5 leading-relaxed">
+                <strong className="text-zinc-900">What to do next:</strong> Please try again in 10 or 20 seconds. In the meantime, refer to the bus stop pole board/ panel for bus stop details, or use &ldquo;Input Bus Stop Details&rdquo; above.
+              </p>
             </div>
           )}
         </div>
