@@ -3,6 +3,7 @@ import {
   BookmarkCheck,
   Bus,
   Clock,
+  HelpCircle,
   LayoutDashboard,
   Radio,
 } from 'lucide-react';
@@ -12,12 +13,14 @@ interface HeaderProps {
   activeScreen: 'dashboard' | 'bookmark';
   onSelectScreen: (screen: 'dashboard' | 'bookmark') => void;
   bookmarkCount?: number;
+  onOpenUserGuide?: () => void;
 }
 
 export default function Header({
   activeScreen,
   onSelectScreen,
   bookmarkCount = 0,
+  onOpenUserGuide,
 }: HeaderProps) {
   const [currentTime, setCurrentTime] = useState('');
 
@@ -72,8 +75,32 @@ export default function Header({
           </div>
         </div>
 
-        {/* Right Section: 2-Screen Navigation with Visibility Indicator & Clock */}
+        {/* Right Section: 2-Screen Navigation with Visibility Indicator, User Guide & Clock */}
         <div className="flex flex-wrap items-center justify-between md:justify-end gap-3">
+          {/* Nielsen Heuristic #10: Help & Documentation Tooltip Button */}
+          {onOpenUserGuide && (
+            <div className="relative group">
+              <button
+                id="btn-user-guide"
+                type="button"
+                onClick={onOpenUserGuide}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-semibold text-zinc-700 shadow-2xs transition-all focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+                aria-label="Help and Documentation: Generate User Guide"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="hidden sm:inline">User Guide</span>
+              </button>
+              {/* Tooltip to generate a user guide */}
+              <div
+                role="tooltip"
+                className="absolute top-full right-0 mt-2 px-2.5 py-1.5 bg-zinc-900 text-white text-[11px] font-medium rounded-lg shadow-xl pointer-events-none whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-50"
+              >
+                Click to generate user guide
+                <div className="absolute bottom-full right-4 -mb-1 border-4 border-transparent border-b-zinc-900" />
+              </div>
+            </div>
+          )}
+
           {/* Current view indicator for users to have complete visibility */}
           <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs text-zinc-600">
             <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">

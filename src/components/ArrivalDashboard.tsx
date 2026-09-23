@@ -13,6 +13,7 @@ import {
   GraduationCap,
   Heart,
   Home,
+  Info,
   Layers,
   MapPin,
   PlusCircle,
@@ -21,12 +22,17 @@ import {
   Search,
   Sparkles,
   Star,
+  Trash2,
   X,
   Zap,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BookmarkItem, BusStop } from '../App.tsx';
 import { BOOKMARK_TAGS } from '../data/mockBusData.js';
+import {
+  LTA_OFFICIAL_BUS_STOPS,
+  type LTABusStop,
+} from '../data/ltaOfficialBusStops.ts';
 
 interface ArrivalDashboardProps {
   busStops: BusStop[];
@@ -51,8 +57,11 @@ export default function ArrivalDashboard({
   onToggleBookmark,
   onNavigateToBookmarks,
 }: ArrivalDashboardProps) {
-  // Search and form state
+  // Search and dropdown state
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [newStopCode, setNewStopCode] = useState('');
   const [newStopName, setNewStopName] = useState('');
@@ -71,6 +80,46 @@ export default function ArrivalDashboard({
   const [bookmarkTag, setBookmarkTag] = useState('home');
   const [bookmarkLabel, setBookmarkLabel] = useState('');
   const [bookmarkNotes, setBookmarkNotes] = useState('');
+
+  // Matches from official Singapore LTA DataMall dataset (Heuristic #6: Recognition over Recall)
+  const ltaDropdownMatches = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return LTA_OFFICIAL_BUS_STOPS.filter(
+      (stop) =>
+        stop.code.includes(q) ||
+        stop.name.toLowerCase().includes(q) ||
+        stop.road.toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setIsSearchDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectLtaStop = (ltaStop: LTABusStop) => {
+    const exists = busStops.some((s) => s.code === ltaStop.code);
+    if (!exists) {
+      onAddBusStop({
+        code: ltaStop.code,
+        name: ltaStop.name,
+        road: ltaStop.road,
+      });
+    }
+    onSelectStop(ltaStop.code);
+    setIsSearchDropdownOpen(false);
+    setSearchQuery('');
+  };
 
   // Filter stops by query (search by bus stop code or name or road)
   const filteredStops = useMemo(() => {
@@ -142,13 +191,15 @@ export default function ArrivalDashboard({
     const trimmedName = newStopName.trim();
     const trimmedRoad = newStopRoad.trim() || 'Singapore Urban Link';
 
-    if (!trimmedCode || !trimmedName) {
-      setFormError('Please enter both bus stop number and name.');
+    // Heuristic #5: Error Prevention - Strictly 5 digit bus stop number
+    // Heuristic #9: Helpful Error Message - Explain error and refer to bus stop pole board/panel
+    if (!trimmedCode || !/^\d{5}$/.test(trimmedCode)) {
+      setFormError('make sure to include numeric 5 digit code (refer to bus stop pole board/ panel for bus stop details)');
       return;
     }
 
-    if (!/^\d{4,5}$/.test(trimmedCode)) {
-      setFormError('Bus stop number should be 4 or 5 digits (e.g. 08057).');
+    if (!trimmedName) {
+      setFormError('Please enter a bus stop name.');
       return;
     }
 
@@ -246,8 +297,8 @@ export default function ArrivalDashboard({
     <section id="arrival-dashboard-screen" className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       {/* Top Search & Stop Input Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
-        {/* Search input */}
-        <div className="relative flex-1">
+        {/* Search input with LTA dropdown */}
+        <div ref={searchContainerRef} className="relative flex-1">
           <label htmlFor="bus-search-input" className="sr-only">
             Search bus stops
           </label>
@@ -257,14 +308,23 @@ export default function ArrivalDashboard({
               id="bus-search-input"
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by 5-digit stop code (e.g. 08057) or stop name..."
+              onFocus={() => {
+                if (searchQuery.trim().length > 0) setIsSearchDropdownOpen(true);
+              }}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsSearchDropdownOpen(true);
+              }}
+              placeholder="Type location (e.g. orch for Orchard) or 5-digit stop number..."
               className="w-full pl-10 pr-10 py-2.5 bg-white border border-zinc-300 rounded-xl text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 shadow-xs"
             />
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  setSearchQuery('');
+                  setIsSearchDropdownOpen(false);
+                }}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5"
                 title="Clear search"
               >
@@ -272,6 +332,77 @@ export default function ArrivalDashboard({
               </button>
             )}
           </div>
+
+          {/* Nielsen Heuristic #6: Real LTA DataMall Dropdown (e.g. typing "orch" gives all variations from LTA) */}
+          {isSearchDropdownOpen && searchQuery.trim().length > 0 && (
+            <div
+              id="lta-search-dropdown"
+              className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-zinc-200 rounded-2xl shadow-xl z-50 max-h-80 overflow-y-auto divide-y divide-zinc-100 animate-in fade-in slide-in-from-top-1"
+            >
+              <div className="p-2.5 bg-zinc-50 border-b border-zinc-200 flex items-center justify-between text-[11px] text-zinc-500 font-medium">
+                <span className="flex items-center gap-1.5 text-zinc-800 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  Official LTA DataMall Bus Stops ({ltaDropdownMatches.length} variations)
+                </span>
+                <span>Click to select</span>
+              </div>
+
+              {ltaDropdownMatches.map((ltaStop) => (
+                <button
+                  key={ltaStop.code}
+                  type="button"
+                  onClick={() => handleSelectLtaStop(ltaStop)}
+                  className="w-full text-left p-3 hover:bg-zinc-50 flex items-start justify-between gap-3 transition-colors group cursor-pointer"
+                >
+                  <div className="flex items-start gap-2.5">
+                    {/* Bus stop number: Amber plate */}
+                    <span className="shrink-0 px-2.5 py-1 bg-amber-600 text-white font-mono text-xs font-bold rounded-lg border border-amber-700 shadow-2xs">
+                      🚏 #{ltaStop.code}
+                    </span>
+                    <div>
+                      <div className="text-sm font-semibold text-zinc-900 group-hover:text-emerald-700 transition-colors">
+                        {ltaStop.name}
+                      </div>
+                      <div className="text-xs text-zinc-500 mt-0.5">
+                        {ltaStop.road}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bus services passing here */}
+                  <div className="hidden sm:flex flex-wrap items-center gap-1 justify-end max-w-[180px]">
+                    {ltaStop.services.slice(0, 5).map((srv) => (
+                      <span
+                        key={srv}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      >
+                        {srv}
+                      </span>
+                    ))}
+                    {ltaStop.services.length > 5 && (
+                      <span className="text-[10px] text-zinc-400 font-mono">
+                        +{ltaStop.services.length - 5}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+
+              {ltaDropdownMatches.length === 0 && (
+                <div className="p-4 text-xs text-zinc-600 flex items-start gap-2.5">
+                  <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-zinc-800">
+                      No matching official bus stop found for &ldquo;{searchQuery}&rdquo;.
+                    </p>
+                    <p className="text-zinc-500 mt-1">
+                      refer to bus stop pole board/ panel for bus stop details
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Input Bus Stop Details button */}
@@ -298,7 +429,7 @@ export default function ArrivalDashboard({
                 Input Bus Stop Details
               </h2>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Register a new Singapore bus stop by entering its 5-digit number and name to track live arrivals.
+                Register a Singapore bus stop by entering its 5-digit number and name to track live arrivals.
               </p>
             </div>
             <button
@@ -317,18 +448,31 @@ export default function ArrivalDashboard({
                   htmlFor="new-stop-code"
                   className="block text-xs font-medium text-zinc-700 mb-1.5"
                 >
-                  Stop Code (5 digits)*
+                  Stop Code (5 numeric digits)*
                 </label>
                 <input
                   id="new-stop-code"
                   type="text"
+                  inputMode="numeric"
                   maxLength={5}
                   value={newStopCode}
-                  onChange={(e) => setNewStopCode(e.target.value.replace(/\D/g, ''))}
-                  placeholder="e.g. 11401"
+                  onChange={(e) => {
+                    setNewStopCode(e.target.value.replace(/\D/g, ''));
+                    if (formError) setFormError('');
+                  }}
+                  placeholder="e.g. 09048"
                   className="w-full px-3.5 py-2 bg-white border border-zinc-300 rounded-lg text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900"
                   required
                 />
+                {newStopCode.length > 0 && newStopCode.length < 5 && (
+                  <p className="text-[11px] text-amber-700 font-medium mt-1">
+                    make sure to include numeric 5 digit code ({5 - newStopCode.length} more needed)
+                  </p>
+                )}
+                <p className="text-[11px] text-zinc-500 mt-1 flex items-center gap-1">
+                  <Info className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <span>refer to bus stop pole board/ panel for bus stop details</span>
+                </p>
               </div>
 
               <div>
@@ -343,7 +487,7 @@ export default function ArrivalDashboard({
                   type="text"
                   value={newStopName}
                   onChange={(e) => setNewStopName(e.target.value)}
-                  placeholder="e.g. Havelock Central Plaza"
+                  placeholder="e.g. Orchard Stn/Tang Plaza"
                   className="w-full px-3.5 py-2 bg-white border border-zinc-300 rounded-lg text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900"
                   required
                 />
@@ -361,17 +505,19 @@ export default function ArrivalDashboard({
                   type="text"
                   value={newStopRoad}
                   onChange={(e) => setNewStopRoad(e.target.value)}
-                  placeholder="e.g. Havelock Road"
+                  placeholder="e.g. Orchard Road"
                   className="w-full px-3.5 py-2 bg-white border border-zinc-300 rounded-lg text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900"
                 />
               </div>
             </div>
 
             {formError && (
-              <p className="text-xs text-rose-600 font-medium">{formError}</p>
+              <p className="text-xs text-rose-600 font-medium bg-rose-50 p-2.5 rounded-lg border border-rose-200">
+                {formError}
+              </p>
             )}
             {formSuccess && (
-              <p className="text-xs text-emerald-600 font-medium flex items-center gap-1.5">
+              <p className="text-xs text-emerald-600 font-medium flex items-center gap-1.5 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 {formSuccess}
               </p>
@@ -432,14 +578,15 @@ export default function ArrivalDashboard({
                     }`}
                   />
                 )}
+                {/* Differentiated Bus Stop Code Badge: Amber Plate */}
                 <span
-                  className={`font-mono px-1.5 py-0.5 rounded text-[11px] ${
+                  className={`font-mono px-2 py-0.5 rounded text-[11px] font-bold ${
                     isSelected
-                      ? 'bg-zinc-800 text-zinc-200'
-                      : 'bg-zinc-100 text-zinc-600'
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-amber-100 text-amber-900 border border-amber-300'
                   }`}
                 >
-                  #{stop.code}
+                  🚏 #{stop.code}
                 </span>
                 <span className="truncate max-w-[150px]">{stop.name}</span>
               </button>
@@ -447,7 +594,7 @@ export default function ArrivalDashboard({
           })}
           {filteredStops.length === 0 && (
             <div className="text-xs text-zinc-500 py-2">
-              No matching bus stops found. Click &ldquo;Input Bus Stop Details&rdquo; to register one.
+              No matching bus stops found. Refer to bus stop pole board/ panel for bus stop details.
             </div>
           )}
         </div>
@@ -481,8 +628,10 @@ export default function ArrivalDashboard({
           <div className="p-5 sm:p-6 border-b border-zinc-200 bg-zinc-50/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
-                <span className="px-2.5 py-1 bg-zinc-900 text-white font-mono text-xs font-semibold rounded-lg tracking-wider">
-                  #{activeStop.code}
+                {/* Differentiated Bus Stop Number Badge: Amber Roadside Plate */}
+                <span className="px-3 py-1 bg-amber-600 text-white font-mono text-xs font-bold rounded-lg tracking-wider border border-amber-700 shadow-2xs inline-flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-amber-200" />
+                  <span>Stop #{activeStop.code}</span>
                 </span>
                 <h2 className="text-xl font-bold tracking-tight text-zinc-900">
                   {activeStop.name}
@@ -504,25 +653,43 @@ export default function ArrivalDashboard({
 
             {/* Actions: Bookmark Button + Live Update Controls */}
             <div className="flex flex-wrap items-center gap-2.5">
-              {/* Bookmark Toggle Button */}
-              <button
-                id="btn-bookmark-stop"
-                type="button"
-                onClick={handleOpenBookmarkModal}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors shadow-2xs ${
-                  activeBookmark
-                    ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
-                    : 'bg-white text-zinc-700 border-zinc-300 hover:border-zinc-400'
-                }`}
-                title="Save stop to Home, Work, School or Other bookmarks"
-              >
-                <Bookmark
-                  className={`w-3.5 h-3.5 ${
-                    activeBookmark ? 'fill-amber-500 text-amber-600' : 'text-zinc-500'
-                  }`}
-                />
-                <span>{activeBookmark ? 'Bookmarked' : 'Bookmark Stop'}</span>
-              </button>
+              {/* Bookmark Actions: Save or Delete (Heuristic #3: User Control & Freedom) */}
+              {activeBookmark ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    id="btn-edit-bookmark"
+                    type="button"
+                    onClick={handleOpenBookmarkModal}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 transition-colors shadow-2xs"
+                    title="Edit bookmark settings"
+                  >
+                    <Bookmark className="w-3.5 h-3.5 fill-amber-500 text-amber-600" />
+                    <span>Saved: {activeBookmark.label}</span>
+                  </button>
+
+                  <button
+                    id="btn-delete-bookmark-active"
+                    type="button"
+                    onClick={() => onToggleBookmark(activeStop.code, null)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 shadow-2xs transition-colors"
+                    title="Delete bookmark for this bus stop"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  id="btn-bookmark-stop"
+                  type="button"
+                  onClick={handleOpenBookmarkModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border bg-white text-zinc-700 border-zinc-300 hover:border-zinc-400 transition-colors shadow-2xs"
+                  title="Save stop to Home, Work, School or Other bookmarks"
+                >
+                  <Bookmark className="w-3.5 h-3.5 text-zinc-500" />
+                  <span>Save Bookmark</span>
+                </button>
+              )}
 
               {/* Auto-update switch */}
               <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 rounded-lg text-xs text-zinc-600 border border-zinc-200">
@@ -645,7 +812,8 @@ export default function ArrivalDashboard({
                 >
                   {/* Left: Service No, Destination & Badges */}
                   <div className="flex items-start sm:items-center gap-4">
-                    <div className="w-14 h-12 rounded-xl bg-zinc-900 text-white font-mono font-bold text-lg flex items-center justify-center shrink-0 shadow-2xs">
+                    {/* Differentiated Bus Number Badge: Lush Emerald Green transit badge */}
+                    <div className="w-14 h-12 rounded-xl bg-emerald-600 text-white font-mono font-black text-lg flex items-center justify-center shrink-0 shadow-xs border border-emerald-700">
                       {bus.serviceNo}
                     </div>
 

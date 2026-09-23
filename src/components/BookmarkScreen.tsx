@@ -9,12 +9,14 @@ import {
   GraduationCap,
   Heart,
   Home,
+  Info,
   MapPin,
   Plus,
   PlusCircle,
   Search,
   Star,
   Trash2,
+  Undo2,
   X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -49,12 +51,31 @@ export default function BookmarkScreen({
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
 
+  // Heuristic #3: User Control & Freedom - Undo deleted bookmarks
+  const [recentlyDeleted, setRecentlyDeleted] = useState<BookmarkItem | null>(null);
+
   // Form state
   const [formStopCode, setFormStopCode] = useState(busStops[0]?.code || '');
   const [formTag, setFormTag] = useState('home');
   const [formLabel, setFormLabel] = useState('');
   const [formNotes, setFormNotes] = useState('');
   const [formError, setFormError] = useState('');
+
+  const handleDeleteWithUndo = (bm: BookmarkItem) => {
+    setRecentlyDeleted(bm);
+    onRemoveBookmark(bm.id);
+  };
+
+  const handleUndoDelete = () => {
+    if (!recentlyDeleted) return;
+    onAddBookmark({
+      stopCode: recentlyDeleted.stopCode,
+      tag: recentlyDeleted.tag,
+      label: recentlyDeleted.label,
+      notes: recentlyDeleted.notes,
+    });
+    setRecentlyDeleted(null);
+  };
 
   // Map each bookmark with its corresponding bus stop data
   const populatedBookmarks = useMemo(() => {
@@ -124,8 +145,9 @@ export default function BookmarkScreen({
     e.preventDefault();
     setFormError('');
 
-    if (!formStopCode) {
-      setFormError('Please select a bus stop.');
+    // Heuristic #5: Error Prevention & Heuristic #9: Helpful Error Message
+    if (!formStopCode || !/^\d{5}$/.test(formStopCode)) {
+      setFormError('make sure to include numeric 5 digit code (refer to bus stop pole board/ panel for bus stop details)');
       return;
     }
 
@@ -296,16 +318,18 @@ export default function BookmarkScreen({
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-2">
                     {getTagBadge(bm.tag, bm.tagInfo)}
-                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 border border-zinc-200">
-                      #{bm.stopCode}
+                    {/* Differentiated Bus Stop Number Badge: Amber Roadside Plate */}
+                    <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-600 text-white border border-amber-700 shadow-2xs inline-flex items-center gap-1">
+                      🚏 #{bm.stopCode}
                     </span>
                   </div>
 
+                  {/* Heuristic #3: User Control & Freedom - Delete bookmark with Undo */}
                   <button
                     type="button"
-                    onClick={() => onRemoveBookmark(bm.id)}
-                    className="text-zinc-400 hover:text-rose-600 p-1 rounded-md transition-colors"
-                    title="Remove from bookmarks"
+                    onClick={() => handleDeleteWithUndo(bm)}
+                    className="text-zinc-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
+                    title="Delete bookmark"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -349,7 +373,8 @@ export default function BookmarkScreen({
                           key={bus.serviceNo}
                           className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-50 border border-zinc-200 text-xs"
                         >
-                          <span className="font-bold text-zinc-900 font-mono">
+                          {/* Differentiated Bus Service Number: Emerald Green transit badge */}
+                          <span className="font-extrabold text-white font-mono bg-emerald-600 px-2 py-0.5 rounded-md text-[11px] shadow-2xs border border-emerald-700">
                             {bus.serviceNo}
                           </span>
                           <span className="text-zinc-400">•</span>
@@ -549,6 +574,37 @@ export default function BookmarkScreen({
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Heuristic #3: User Control & Freedom - Undo Deleted Bookmark Toast */}
+      {recentlyDeleted && (
+        <div
+          id="undo-deleted-bookmark-toast"
+          className="fixed bottom-6 right-6 z-50 bg-zinc-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-zinc-700 flex items-center gap-3 text-xs animate-in slide-in-from-bottom-2"
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>
+              Deleted bookmark &ldquo;{recentlyDeleted.label}&rdquo; (Stop #{recentlyDeleted.stopCode})
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleUndoDelete}
+            className="flex items-center gap-1 px-3 py-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            <Undo2 className="w-3.5 h-3.5" />
+            <span>Undo</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setRecentlyDeleted(null)}
+            className="p-1 text-zinc-400 hover:text-white"
+            title="Dismiss"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
     </section>
