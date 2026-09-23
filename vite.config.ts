@@ -51,7 +51,7 @@ export default defineConfig(() => {
     plugins: [react(), tailwindcss(), apiRoutesPlugin()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(process.cwd(), '.'),
       },
     },
     server: {
