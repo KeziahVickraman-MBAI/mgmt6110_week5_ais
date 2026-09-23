@@ -202,28 +202,29 @@ export default function ArrivalDashboard({
     setShowBookmarkModal(false);
   };
 
-  // Crowding badge helper
+  // Nielsen Heuristic #2: Match between system and real world (Bus Capacity)
   const getOccupancyBadge = (statusCode?: string, label?: string) => {
     switch (statusCode) {
       case 'green':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            {label}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>{label || 'Seats Available'}</span>
           </span>
         );
+      case 'yellow':
       case 'amber':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-            {label}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-yellow-50 text-yellow-800 border border-yellow-300">
+            <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+            <span>{label || 'Standing space only and filling fast'}</span>
           </span>
         );
       case 'red':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-            {label}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+            <span>{label || 'Alert: No space'}</span>
           </span>
         );
       default:
@@ -605,6 +606,29 @@ export default function ArrivalDashboard({
                     {lastUpdatedTime} SGT
                   </span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Real-World Bus Capacity Guide (Nielsen Heuristic #2: Match Between System and Real World) */}
+          <div className="px-5 py-2.5 bg-zinc-50 border-b border-zinc-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="font-semibold text-zinc-700 text-[11px] uppercase tracking-wider">
+              Bus Capacity Guide:
+            </span>
+            <div className="flex flex-wrap items-center gap-3.5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-zinc-700 font-medium">Seats Available (Green)</span>
+              </div>
+              <span className="text-zinc-300 hidden sm:inline">•</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                <span className="text-zinc-700 font-medium">Standing space only & filling fast (Yellow)</span>
+              </div>
+              <span className="text-zinc-300 hidden sm:inline">•</span>
+              <div className="flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                <span className="text-rose-700 font-semibold">Alert: No space (Red)</span>
               </div>
             </div>
           </div>

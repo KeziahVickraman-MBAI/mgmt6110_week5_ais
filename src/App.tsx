@@ -80,11 +80,11 @@ export default function App() {
             newThird = newSubsequent + Math.floor(Math.random() * 6) + 6;
           }
 
-          // Randomly fluctuate occupancy status over time
+          // Randomly fluctuate occupancy status over time (Nielsen Heuristic #2: Match between system and real world)
           const statuses = [
             { text: 'Seats Available', code: 'green' },
-            { text: 'Standing Available', code: 'amber' },
-            { text: 'Limited Standing', code: 'red' },
+            { text: 'Standing space only and filling fast', code: 'yellow' },
+            { text: 'Alert: No space', code: 'red' },
           ];
 
           const shouldShiftStatus = Math.random() < 0.2;
@@ -115,8 +115,13 @@ export default function App() {
         .map((srv, idx) => ({
           serviceNo: srv,
           destination: `Transit Point ${srv}`,
-          status: idx === 0 ? 'Seats Available' : idx === 1 ? 'Standing Available' : 'Seats Available',
-          statusCode: idx === 0 ? 'green' : idx === 1 ? 'amber' : 'green',
+          status:
+            idx === 0
+              ? 'Seats Available'
+              : idx === 1
+              ? 'Standing space only and filling fast'
+              : 'Alert: No space',
+          statusCode: idx === 0 ? 'green' : idx === 1 ? 'yellow' : 'red',
           type: idx % 2 === 0 ? 'Double Deck' : 'Single Deck',
           wheelchair: true,
           etaMinutes: (idx + 1) * 3 + Math.floor(Math.random() * 2),

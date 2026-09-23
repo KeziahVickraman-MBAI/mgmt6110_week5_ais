@@ -21,8 +21,8 @@ export const INITIAL_BUS_STOPS = [
       {
         serviceNo: '133',
         destination: 'Bayfront Interchange',
-        status: 'Standing Available',
-        statusCode: 'amber',
+        status: 'Standing space only and filling fast',
+        statusCode: 'yellow',
         type: 'Single Deck',
         wheelchair: true,
         etaMinutes: 6,
@@ -43,7 +43,7 @@ export const INITIAL_BUS_STOPS = [
       {
         serviceNo: '97',
         destination: 'Jurong East Terminus',
-        status: 'Limited Standing',
+        status: 'Alert: No space',
         statusCode: 'red',
         type: 'Double Deck',
         wheelchair: false,
@@ -83,8 +83,8 @@ export const INITIAL_BUS_STOPS = [
       {
         serviceNo: '174',
         destination: 'New Bridge Terminal',
-        status: 'Standing Available',
-        statusCode: 'amber',
+        status: 'Standing space only and filling fast',
+        statusCode: 'yellow',
         type: 'Single Deck',
         wheelchair: true,
         etaMinutes: 8,
@@ -94,7 +94,7 @@ export const INITIAL_BUS_STOPS = [
       {
         serviceNo: '190',
         destination: 'Choa Chu Kang Junction',
-        status: 'Limited Standing',
+        status: 'Alert: No space',
         statusCode: 'red',
         type: 'Double Deck',
         wheelchair: true,
@@ -123,8 +123,8 @@ export const INITIAL_BUS_STOPS = [
       {
         serviceNo: '16',
         destination: 'Marine Parade Avenue',
-        status: 'Standing Available',
-        statusCode: 'amber',
+        status: 'Standing space only and filling fast',
+        statusCode: 'yellow',
         type: 'Single Deck',
         wheelchair: true,
         etaMinutes: 7,
@@ -163,8 +163,8 @@ export const INITIAL_BUS_STOPS = [
       {
         serviceNo: '88',
         destination: 'Pasir Ris Coastal Station',
-        status: 'Standing Available',
-        statusCode: 'amber',
+        status: 'Standing space only and filling fast',
+        statusCode: 'yellow',
         type: 'Double Deck',
         wheelchair: true,
         etaMinutes: 6,
@@ -203,8 +203,8 @@ export const INITIAL_BUS_STOPS = [
       {
         serviceNo: '293',
         destination: 'Tampines Street 45 Loop',
-        status: 'Standing Available',
-        statusCode: 'amber',
+        status: 'Standing space only and filling fast',
+        statusCode: 'yellow',
         type: 'Single Deck',
         wheelchair: true,
         etaMinutes: 5,
@@ -214,7 +214,7 @@ export const INITIAL_BUS_STOPS = [
       {
         serviceNo: '18',
         destination: 'Bedok North Interchange',
-        status: 'Limited Standing',
+        status: 'Alert: No space',
         statusCode: 'red',
         type: 'Double Deck',
         wheelchair: true,

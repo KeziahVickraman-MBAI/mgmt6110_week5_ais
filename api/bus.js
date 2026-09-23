@@ -144,6 +144,20 @@ export default async function handler(req, res) {
       return minutes < 0 ? 0 : minutes;
     };
 
+    // Helper to map LTA capacity loads according to Nielsen Heuristic #2
+    const mapLoad = (load) => {
+      switch (load) {
+        case 'SEA':
+          return { status: 'Seats Available', statusCode: 'green' };
+        case 'SDA':
+          return { status: 'Standing space only and filling fast', statusCode: 'yellow' };
+        case 'LSD':
+          return { status: 'Alert: No space', statusCode: 'red' };
+        default:
+          return { status: 'Seats Available', statusCode: 'green' };
+      }
+    };
+
     // Handle an empty Services array as "no buses running", not as an error
     const rawServices = Array.isArray(data?.Services) ? data.Services : [];
 
@@ -151,6 +165,7 @@ export default async function handler(req, res) {
     const simplifiedList = rawServices.map((srv) => {
       const nextBusMinutes = getMinutes(srv.NextBus?.EstimatedArrival);
       const nextBus2Minutes = getMinutes(srv.NextBus2?.EstimatedArrival);
+      const loadInfo = mapLoad(srv.NextBus?.Load);
 
       return {
         ServiceNo: srv.ServiceNo,
@@ -158,6 +173,11 @@ export default async function handler(req, res) {
         nextBus2Minutes,
         nextBus: nextBusMinutes,
         nextBus2: nextBus2Minutes,
+        status: loadInfo.status,
+        statusCode: loadInfo.statusCode,
+        load: srv.NextBus?.Load,
+        type: srv.NextBus?.Type === 'DD' ? 'Double Deck' : 'Single Deck',
+        wheelchair: srv.NextBus?.Feature === 'WAB',
         hasBusesRunning: nextBusMinutes !== null || nextBus2Minutes !== null,
       };
     });
