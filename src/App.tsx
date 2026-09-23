@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import ArrivalDashboard from './components/ArrivalDashboard.tsx';
 import BookmarkScreen from './components/BookmarkScreen.tsx';
 import Header from './components/Header.tsx';
+import UserGuideModal from './components/UserGuideModal.tsx';
 import { INITIAL_BOOKMARKS, INITIAL_BUS_STOPS } from './data/mockBusData.js';
 
 export interface BusService {
@@ -43,6 +44,7 @@ export default function App() {
   const [busStops, setBusStops] = useState<BusStop[]>(INITIAL_BUS_STOPS);
   const [selectedStopCode, setSelectedStopCode] = useState<string>('08057');
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(INITIAL_BOOKMARKS);
+  const [showUserGuide, setShowUserGuide] = useState(false);
 
   const [lastUpdatedTime, setLastUpdatedTime] = useState<string>(() => {
     return new Date().toLocaleTimeString('en-SG', {
@@ -224,11 +226,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-100/60 text-zinc-900 flex flex-col font-sans antialiased">
-      {/* App Header & 2-Screen Navigation with Visibility Indicator */}
+      {/* App Header & 2-Screen Navigation with Visibility Indicator & User Guide */}
       <Header
         activeScreen={activeScreen}
         onSelectScreen={setActiveScreen}
         bookmarkCount={bookmarks.length}
+        onOpenUserGuide={() => setShowUserGuide(true)}
       />
 
       {/* Screen Views (Navigated purely by React State) */}
@@ -259,6 +262,12 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Nielsen Heuristic #10: Help and Documentation Modal */}
+      <UserGuideModal
+        isOpen={showUserGuide}
+        onClose={() => setShowUserGuide(false)}
+      />
 
       {/* Minimalist Context Footer */}
       <footer

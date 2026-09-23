@@ -84,11 +84,11 @@ export default function Header({
                 id="btn-user-guide"
                 type="button"
                 onClick={onOpenUserGuide}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-semibold text-zinc-700 shadow-2xs transition-all focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold text-emerald-800 shadow-2xs transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                 aria-label="Help and Documentation: Generate User Guide"
               >
                 <HelpCircle className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="hidden sm:inline">User Guide</span>
+                <span>User Guide</span>
               </button>
               {/* Tooltip to generate a user guide */}
               <div
